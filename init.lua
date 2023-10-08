@@ -43,6 +43,9 @@ P.S. You can delete this when you're done too. It's your config now :)
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
+-- set up the color column
+vim.opt.colorcolumn = "80"
+
 -- Install package manager
 --    https://github.com/folke/lazy.nvim
 --    `:help lazy.nvim.txt` for more info
@@ -73,6 +76,38 @@ require('lazy').setup({
 
   -- Detect tabstop and shiftwidth automatically
   'tpope/vim-sleuth',
+
+  {
+    'alexghergh/nvim-tmux-navigation',
+    config = function()
+      local nvim_tmux_nav = require("nvim-tmux-navigation")
+
+      nvim_tmux_nav.setup {
+        disable_when_zoomed = true,
+        keybindings = {
+          left = "<C-h>",
+          down = "<C-j>",
+          up = "<C-k>",
+          right = "<C-l>",
+          last_active = "<C-\\>",
+          next = "<C-Space>"
+        }
+      }
+
+    end
+  },
+
+  -- vimwiki notetaking
+  {
+    "vimwiki/vimwiki",
+    init = function()
+      vim.g.vimwiki_list = {{
+        syntax="markdown",
+        ext = ".md",
+        path = "~/Nextcloud/Notes/",
+      }}
+    end
+  },
 
   -- NOTE: This is where your plugins related to LSP can be installed.
   --  The configuration is done below. Search for lspconfig to find it below.
@@ -106,6 +141,41 @@ require('lazy').setup({
 
       -- Adds a number of user-friendly snippets
       'rafamadriz/friendly-snippets',
+    },
+  },
+  {
+    -- note-taking
+    "nvim-neorg/neorg",
+    build = ":Neorg sync-parsers",
+    dependencies = { "nvim-lua/plenary.nvim" },
+    config = function()
+      require("neorg").setup {
+        load = {
+          ["core.defaults"] = {},
+          ["core.concealer"] = {},
+          ["core.dirman"] = {
+            config = {
+              workspaces = {
+                notes = "~/notes",
+              },
+              default_workspace = "notes",
+            },
+          },
+        },
+      }
+      vim.wo.foldlevel = 99
+      vim.wo.conceallevel = 2
+    end,
+
+    -- lazy-load on filetype
+    ft = "norg",
+
+    -- options for neorg. Automatically calls `require("neorg").setup(opts)`
+    opts ={
+      highlight = {enable = true},
+      load = {
+        ["core.defaults"] = {},
+      }
     },
   },
 
@@ -144,10 +214,13 @@ require('lazy').setup({
 
   {
     -- Theme inspired by Atom
-    'navarasu/onedark.nvim',
+    'NLKNguyen/papercolor-theme',
     priority = 1000,
     config = function()
-      vim.cmd.colorscheme 'onedark'
+      vim.cmd("set background=dark")
+      vim.cmd("colorscheme PaperColor")
+      vim.api.nvim_set_hl(0, "Normal", { bg = "none" })
+      vim.api.nvim_set_hl(0, "NormalFloat", { bg = "none" })
     end,
   },
 
@@ -170,6 +243,7 @@ require('lazy').setup({
     'lukas-reineke/indent-blankline.nvim',
     -- Enable `lukas-reineke/indent-blankline.nvim`
     -- See `:help indent_blankline.txt`
+    version = "2.20.8",
     opts = {
       char = '┊',
       show_trailing_blankline_indent = false,
@@ -203,9 +277,17 @@ require('lazy').setup({
   {
     -- Highlight, edit, and navigate code
     'nvim-treesitter/nvim-treesitter',
+    opts = {
+      highlight = {
+        enable = true
+      },
+    },
     dependencies = {
       'nvim-treesitter/nvim-treesitter-textobjects',
     },
+    config = function(_, opts)
+      require("nvim-treesitter.configs").setup(opts)
+    end,
     build = ':TSUpdate',
   },
 
@@ -274,6 +356,10 @@ vim.keymap.set({ 'n', 'v' }, '<Space>', '<Nop>', { silent = true })
 -- Remap for dealing with word wrap
 vim.keymap.set('n', 'k', "v:count == 0 ? 'gk' : 'k'", { expr = true, silent = true })
 vim.keymap.set('n', 'j', "v:count == 0 ? 'gj' : 'j'", { expr = true, silent = true })
+
+-- Remap ; to : in normal 
+vim.keymap.set('n', ';', ":")
+vim.keymap.set('n', ';;', ";")
 
 -- [[ Highlight on yank ]]
 -- See `:help vim.highlight.on_yank()`
